@@ -10,7 +10,27 @@ class MovableObject {
     otherDirection = false;
     speedY = 0;
     acceleration = 1;
+    energy = 100;
 
+    rX;
+    rY;
+    rW;
+    rH;
+
+    offset = {
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0
+    }
+
+
+    getRealFrame() {
+        this.rX = this.x + this.offset.left;
+        this.rY = this.y + this.offset.top;
+        this.rW = this.width - this.offset.left - this.offset.right;
+        this.rH = this.height - this.offset.top - this.offset.bottom;
+    }
 
     applyGravity() {
         setInterval(() => {
@@ -55,16 +75,38 @@ class MovableObject {
             ctx.strokeStyle = 'blue';
             ctx.rect(this.x, this.y, this.width, this.height);
             ctx.stroke();
+        } if (this instanceof Character || this instanceof Chicken) {
+            ctx.beginPath();
+            ctx.lineWidth = '3';
+            ctx.strokeStyle = 'red';
+            ctx.rect(
+                this.rX,
+                this.rY,
+                this.rW,
+                this.rH
+            );
+            ctx.stroke();
         }
 
     }
 
     // character.isColliding(chicken)
     isColliding(mo) {
-        return this.x + this.width > mo.x &&
-            this.y + this.height > mo.y &&
-            this.x < mo.x &&
-            this.y < mo.y + mo.height;
+        return this.rX + this.rW > mo.rX &&
+            this.rY + this.rH > mo.rY && 
+            this.rX < mo.rX + mo.rW &&
+            this.rY < mo.rY + mo.rH;
+    }
+
+    hit(){
+        this.energy -= 5;
+        if(this.energy < 0){
+            this.energy = 0;
+        }
+    }
+
+    isDead(){
+        return this. energy == 0;
     }
 
 
