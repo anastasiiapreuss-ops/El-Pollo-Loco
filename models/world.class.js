@@ -5,6 +5,9 @@ class World {
     ctx;
     keyboard;
     camera_x = 0;
+    healthStatusBar = new HealthStatusBar();
+    coinStatusBar = new CoinStatusBar();
+    throwableObjects = [];
 
     constructor(canvas, keyboard) {
         this.ctx = canvas.getContext('2d');
@@ -12,7 +15,7 @@ class World {
         this.keyboard = keyboard;
         this.draw();
         this.setWorld();
-        this.checkCollisions();
+        this.run();
     }
 
 
@@ -21,15 +24,27 @@ class World {
         this.character.world = this;
     }
 
-    checkCollisions() {
+    run() {
         setInterval(() => {
-            this.level.enemies.forEach((enemy) => {
-                if (this.character.isColliding(enemy)) {
-                    this.character.hit();
-                    console.log('Collision with Character, energy', this.character.energy);
-                }
-            });
+            this.checkCollisions();
+            this.checkThrowObjects();
         }, 200);
+    }
+
+    checkCollisions() {
+        this.level.enemies.forEach((enemy) => {
+            if (this.character.isColliding(enemy)) {
+                this.character.hit();
+                this.healthStatusBar.setPercentage(this.character.energy);
+            }
+        });
+    }
+
+    checkThrowObjects(){
+        if(this.keyboard.L){
+            let bottle = new ThrowableObject(this.character.x + 100, this.character.y + 100);
+            this.throwableObjects.push(bottle);
+        }
     }
 
     draw() {
@@ -38,9 +53,20 @@ class World {
         this.ctx.translate(this.camera_x, 0);
 
         this.addObjectsToMap(this.level.backgroundObjects); //alle BackgroundObjects zur Map einfügen
+
+        this.ctx.translate(-this.camera_x, 0); // back
+        this.addToMap(this.healthStatusBar);
+        this.ctx.translate(this.camera_x, 0); // forwards
+
+        this.ctx.translate(-this.camera_x, 0); // back
+        this.addToMap(this.coinStatusBar);
+        this.ctx.translate(this.camera_x, 0);
+
         this.addToMap(this.character); // Charakter zur Map einfügen
         this.addObjectsToMap(this.level.enemies);// alle Enemies zur Map einfügen
         this.addObjectsToMap(this.level.clouds);// alle Clouds zur Map einfügen
+
+        this.addObjectsToMap(this.throwableObjects)
 
         this.ctx.translate(-this.camera_x, 0);
 
@@ -59,22 +85,24 @@ class World {
         })
     }
     addToMap(mo) {
+
         if (mo.otherDirection) {
             this.flipImage(mo);
         }
-        mo.getRealFrame();
         mo.draw(this.ctx);
-        mo.drawFrame(this.ctx);
+
         if (mo.otherDirection) {
             this.flipImageBack(mo);
         }
+        mo.drawFrame(this.ctx);
     }
     // Image Spiegeln
     flipImage(mo) {
         this.ctx.save();
         this.ctx.translate(mo.width, 0);
-        this.ctx.scale(-1, 1)
+        this.ctx.scale(-1, 1);
         mo.x = mo.x * -1;
+
     }
     // gespiegeltes Image zurücksetzen
     flipImageBack(mo) {
